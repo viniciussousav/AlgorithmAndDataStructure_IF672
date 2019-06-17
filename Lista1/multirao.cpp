@@ -59,7 +59,6 @@ struct Fila{
 struct Pilha{
 
     int quantNo = 0;
-
     No *top;
 
     Pilha(): top(new No(0,0,0,0)){}
