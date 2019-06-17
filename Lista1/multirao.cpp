@@ -8,8 +8,9 @@ struct No{
     int senhaMagistrado;
     int horasProcesso;
     int empresa;
+    int posInicial;
     No *proximo;
-    No(int senhaMagistrado,int horasProcesso, int empresa): senhaMagistrado(senhaMagistrado),horasProcesso(horasProcesso), empresa(empresa){}
+    No(int senhaMagistrado,int horasProcesso, int empresa, int posInicial): senhaMagistrado(senhaMagistrado),horasProcesso(horasProcesso), empresa(empresa), posInicial(posInicial){}
 
 };
 
@@ -21,8 +22,8 @@ struct Fila{
 
     Fila(): head(nullptr),tail(nullptr){}
 
-    void inserirNoFim(int senhaMagistrado, int horasProcesso, int empresa){
-        No *novo = new No(senhaMagistrado, horasProcesso, empresa);
+    void inserirNoFim(No *novo){
+
         if(!this->tail){
             this->head = novo;
             this->tail = novo;
@@ -61,34 +62,39 @@ struct Pilha{
 
     No *top;
 
-    Pilha(): top(nullptr){}
+    Pilha(): top(new No(0,0,0,0)){}
 
     void empilhar(No *novo){
-        if(!this->top){
-            this->top = novo;
+        if(!this->top->proximo){
+            this->top->proximo = novo;
         } else {
-            novo->proximo = this->top;
-            this->top = novo;
+            novo->proximo = this->top->proximo;
+            this->top->proximo = novo;
         }
         this->quantNo++;
     }
 
     void print() {
-        No *cur = this->top;
+        No *cur = this->top->proximo;
         while (cur) {
             cout << "(" << cur->senhaMagistrado << "," << cur->horasProcesso  << ")" << " ";
             cur = cur->proximo;
         }
     }
 
-    void pop() {
+    No *pop() {
+
+        No *excluido = this->top->proximo;
         if (this->quantNo == 1) {
             this->top->proximo = nullptr;
         } else if(this->quantNo > 1) {
             this->top->proximo = this->top->proximo->proximo;
         }
-        quantNo -= 1;
+        this->quantNo -= 1;
+        excluido->proximo = nullptr;
+        return excluido;
     }
+
 };
 
 int main(int argc, char *argv[]) {
@@ -102,35 +108,33 @@ int main(int argc, char *argv[]) {
         int quantProcessos;
         cin >> quantProcessos;
         for (int j = 0; j < quantProcessos; j++) {
+
             int senhaMagistrado;
             cin >> senhaMagistrado;
             int horasProcesso;
             cin >> horasProcesso;
-            fila[i].inserirNoFim(senhaMagistrado,horasProcesso, i);
+            No *novo = new No(senhaMagistrado, horasProcesso, i, j);
+            fila[i].inserirNoFim(novo);
         }
     }
 
-    for (int k = 0; k < quantEmpresas; ++k) {
-        cout << "Fila " << (k+1) << ": ";
-        fila[k].print();
-        cout << "" << endl;
-    }
 
-    cout << "Insira a quantidade de magistrados" << endl;
     int quantMagistrados;
     cin >> quantMagistrados;
+
+    int horasMagistradosArray[quantMagistrados];
+    for (int l = 0; l < quantMagistrados; ++l) {
+        cin >> horasMagistradosArray[l];
+    }
 
     int processosTotal = 0;
     for (int m = 0; m < quantEmpresas ; ++m) {
         processosTotal += fila[m].quantNo;
     }
-    cout << "O número total de processos é: " << processosTotal << endl;
 
     Pilha *pilha = new Pilha[quantMagistrados];
 
-
-    //INSERINDO NA PILHA
-    for (int k = 0, j = 0, i = 0; k < processosTotal; ) {
+    for (int k = 0, j = 0, i = 0; k < processosTotal; ) { //INSERINDO NA PILHA
         if(fila[i].quantNo > 0){
             pilha[j].empilhar(fila[i].retirarInicio());
             j++;
@@ -143,20 +147,42 @@ int main(int argc, char *argv[]) {
         if(i == quantEmpresas){
             i = 0;
         }
-
-    } //TERMINO IMPRESSÃO
-
-
-    for (int k = 0; k < quantMagistrados; ++k) {
-        cout << "Pilha " << (k+1) << ": ";
-        pilha[k].print();
-        cout << "" << endl;
     }
 
 
-    for (int l = 0; l < quantMagistrados; ++l) {
-        cout << "Topo pilha" << (l+1) << ": (" << pilha[l].top->senhaMagistrado << ", " << pilha[l].top->horasProcesso << ")" << endl;
+
+    for (int at = 0; at < quantMagistrados; ++at) { //Escolhendo o auxiliar
+        for (int i = 0; i < quantMagistrados ; ++i) {
+            if(i != at){
+                Pilha *aux = new Pilha();
+                while(pilha[at].top->proximo != nullptr) {
+                    if(pilha[at].top->proximo->senhaMagistrado == i){
+                        pilha[i].empilhar(pilha[at].pop());
+                    } else {
+                        aux->empilhar(pilha[at].pop());
+                    }
+                }
+                pilha[at] = *aux;
+            }
+        }
     }
+
+    while(processosTotal > 0){
+        for (int i = 0; i < 24; ++i) {
+            for (int j = 0; j < quantMagistrados; ++j) {
+                if(pilha[j].top->proximo){
+                    if(horasMagistradosArray[j] > i){
+                        pilha[j].top->proximo->horasProcesso -= 1;
+                        if(pilha[j].top->proximo->horasProcesso == 0){
+                            cout << j << " " << pilha[j].top->proximo->empresa << " " << pilha[j].top->proximo->posInicial << endl;
+                            pilha[j].pop();
+                            processosTotal--;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
 }
-
-
