@@ -110,13 +110,11 @@ int main(int argc, char *argv[]) {
         if(procurar(idTransferido, armarioAntigo, nGavetasAntigas) != -1){
 
             int pos = procurar(idTransferido, armarioAntigo, nGavetasAntigas);
-
             int k = funcaoChave(armarioAntigo[pos]->nome);
             int h = k%nGavetasNovas;
             armarioNovo[h].inserir(armarioAntigo[pos]);
         }
     }
-
 
     for (int k = 0; k < nGavetasNovas; ++k) {
         cout << k << ": " << armarioNovo[k].total << endl;
