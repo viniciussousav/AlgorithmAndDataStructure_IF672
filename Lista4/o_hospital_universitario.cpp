@@ -3,7 +3,16 @@
 
 using namespace std;
 
+struct paciente {
 
+    int idade;
+    int urgencia;
+    int ordem;
+
+    paciente(){}
+    paciente(int idade, int urgencia, int ordem): idade(idade), urgencia(urgencia), ordem(ordem){}
+
+};
 
 
 class Heap{
@@ -12,18 +21,6 @@ public:
 
     int tamanho;
     int quantidade;
-    int vez;
-
-    struct paciente {
-
-        int idade;
-        int urgencia;
-        int ordem;
-
-        paciente(){}
-        paciente(int idade, int urgencia, int ordem): idade(idade), urgencia(urgencia), ordem(ordem){}
-
-    };
 
     paciente* array;
 
@@ -32,7 +29,6 @@ public:
         this->tamanho = 1;
         this->quantidade = 0;
         this->array = new paciente[tamanho];
-        this->vez = 0;
     }
 
     bool temFilhoEsquerda(int pos){
@@ -87,7 +83,6 @@ public:
         }
     }
 
-
     void trocar(int posUm, int posDois){
         paciente aux = array[posUm];
         array[posUm] = array[posDois];
@@ -98,16 +93,13 @@ public:
         while (pos > 0 && temPai(pos)){
             if(getPai(pos).urgencia < array[pos].urgencia){
                 trocar((pos-1)/2, pos);
-                pos = (pos - 1)/2;
             } else if(getPai(pos).idade < array[pos].idade && getPai(pos).urgencia == array[pos].urgencia){
                 trocar((pos-1)/2, pos);
-                pos = (pos - 1)/2;
-            } else if(getPai(pos).ordem < array[pos].ordem && getPai(pos).idade == array[pos].idade && getPai(pos).urgencia == array[pos].urgencia){
-                trocar((pos-1)/2, pos);
-                pos = (pos - 1)/2;
-            } else{
-                pos--;
+            } else if(getPai(pos).ordem < array[pos].ordem && getPai(pos).idade == array[pos].idade && getPai(pos).urgencia == array[pos].urgencia) {
+                trocar((pos - 1) / 2, pos);
             }
+            pos = (pos - 1)/2;
+
         }
     }
     void heapify(int pos) {
@@ -148,24 +140,23 @@ public:
 
     }
 
-    paciente tirarDaFila(){
-        paciente ultimo = array[this->quantidade-1];
-        paciente primeiro = array[0];
-        array[0] = ultimo;
-        this->quantidade--;
-        heapify(0);
-        return primeiro;
+    void add(int idade,int urgencia, int ordem){
+        paciente newPaciente(idade, urgencia, ordem);
+        this->array[this->quantidade] = newPaciente;
+        this->quantidade++;
+        bubbleUp(this->quantidade - 1);
+        aumentar();
 
     }
 
-
-    void add(int idade,int urgencia){
-        paciente newPaciente(idade, urgencia, this->vez);
-        aumentar();
-        this->array[this->quantidade] = newPaciente;
-        this->quantidade++;
-        this->vez++;
-        bubbleUp(this->quantidade - 1);
+    paciente atender(){
+        paciente atendido = this->array[0];
+        if(this->quantidade > 0){
+            this->array[0] = this->array[this->quantidade-1];
+            this->quantidade--;
+            heapify(0);
+        }
+        return atendido;
 
     }
 
@@ -176,25 +167,58 @@ public:
 };
 
 
+
 int main(int argc, char *argv[]) {
+
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
     int numeroServicos;
     cin >> numeroServicos;
 
     Heap  fila [numeroServicos];
 
+    int ordem = 0;
     string entrada;
     while(cin >> entrada, entrada != "END"){
         if(entrada == "CIN"){
             int idade, urgencia, servico;
             cin >> idade >> urgencia >> servico;
-            fila[servico].add(idade, urgencia); //já estou adicionando
+            fila[servico].add(idade, urgencia, ordem); //já estou adicionando
+            ordem++;
+        } else if(entrada == "NXT"){
+            int a;
+            cin >> a;
+            paciente retirado = fila[a].atender();
+            cout << a << " " << retirado.idade << " " << retirado.urgencia << endl;
+        } else if(entrada == "STD"){
+            int indice = 0;
+            for (int i = 1; i < numeroServicos; ++i) {
+                if(fila[indice].quantidade == 0 && fila[i].quantidade > 0){
+                    indice = i;
+                } else if (fila[indice].quantidade > 0 && fila[i].quantidade > 0){
+                    if(fila[indice].at(0).urgencia > fila[i].at(0).urgencia){
+                        indice = i;
+                    } else if (fila[indice].at(0).idade > fila[i].at(0).idade && fila[indice].at(0).urgencia == fila[i].at(0).urgencia){
+                        indice = i;
+                    } else if (fila[indice].at(0).ordem > fila[i].at(0).ordem && fila[indice].at(0).idade == fila[i].at(0).idade && fila[indice].at(0).urgencia == fila[i].at(0).urgencia){
+                        indice = i;
+                    }
+                }
+
+            }
+
+            if(fila[indice].quantidade == 0){
+                cout << "-1 -1 -1" << endl;
+            } else {
+                cout << indice << " " << fila[indice].at(0).idade << " " << fila[indice].at(0).urgencia << endl;
+                fila[indice].atender();
+
+            }
+
         }
     }
 
-    for (int i = 0; i < fila[0].quantidade; ++i) {
-        cout << "Urgência: " << fila[0].at(i).urgencia << ", idade: " << fila[0].at(i).idade << endl;
-    }
 
     return 0;
 }
